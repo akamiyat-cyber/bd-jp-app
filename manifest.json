@@ -1,0 +1,15 @@
+{
+  "name": "BD-JP Unit Converter",
+  "short_name": "BD-JP単位",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#006a4e",
+  "theme_color": "#006a4e",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

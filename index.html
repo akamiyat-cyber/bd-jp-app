@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BD-JP Converter</title>
+    <style>
+        :root { --primary-color: #006a4e; --secondary-color: #f42a41; --bg-color: #f0f2f5; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); width: 100%; max-width: 480px; }
+        h2 { text-align: center; color: var(--primary-color); margin-bottom: 10px; }
+        .tabs { display: flex; flex-wrap: wrap; margin-bottom: 20px; background: #ddd; border-radius: 8px; padding: 4px; gap: 2px; }
+        .tab-btn { flex: 1 1 45%; padding: 10px; border: none; background: none; cursor: pointer; border-radius: 6px; font-weight: bold; color: #555; font-size: 0.85rem; }
+        .tab-btn.active { background: white; color: var(--primary-color); }
+        .content { display: none; }
+        .content.active { display: block; }
+        .section-label { font-size: 0.75rem; font-weight: bold; color: #888; margin: 15px 0 5px 5px; text-transform: uppercase; }
+        .unit-row { display: flex; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #eee; }
+        .unit-row input { flex: 1; border: none; background: transparent; font-size: 1.1rem; outline: none; text-align: right; padding-right: 10px; width: 40%; }
+        .unit-name { width: 135px; font-size: 0.85rem; color: #333; border-left: 2px solid #ddd; padding-left: 10px; }
+        .divider { text-align: center; margin: 5px 0; color: #aaa; font-size: 0.8rem; }
+        .ref-box { margin-top: 20px; padding: 10px; font-size: 0.8rem; border-top: 1px solid #eee; color: #666; }
+        .ref-box a { color: var(--primary-color); text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>BD-JP Converter</h2>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab(event, 'weight')">Weight</button>
+        <button class="tab-btn" onclick="openTab(event, 'area')">Area</button>
+        <button class="tab-btn" onclick="openTab(event, 'length')">Length</button>
+        <button class="tab-btn" onclick="openTab(event, 'currency')">Currency</button>
+    </div>
+
+    <div id="weight" class="content active">
+        <div class="section-label">Bangladesh</div>
+        <div class="unit-row"><input type="number" id="bd-maund" placeholder="0" oninput="calcWeight('maund')"><span class="unit-name">Maund (মন)</span></div>
+        <div class="unit-row"><input type="number" id="bd-seer" placeholder="0" oninput="calcWeight('seer')"><span class="unit-name">Seer (সের)</span></div>
+        <div class="unit-row"><input type="number" id="bd-tola" placeholder="0" oninput="calcWeight('tola')"><span class="unit-name">Tola (তোলা)</span></div>
+        <div class="divider">⇅</div>
+        <div class="section-label">Japan / International</div>
+        <div class="unit-row"><input type="number" id="jp-kg" placeholder="0" oninput="calcWeight('jp-kg')"><span class="unit-name">Kilogram (kg)</span></div>
+        <div class="unit-row"><input type="number" id="jp-g" placeholder="0" oninput="calcWeight('jp-g')"><span class="unit-name">Gram (g)</span></div>
+    </div>
+
+    <div id="area" class="content">
+        <div class="section-label">Bangladesh</div>
+        <div class="unit-row"><input type="number" id="bd-acre" placeholder="0" oninput="calcArea('acre')"><span class="unit-name">Acre (エーカー)</span></div>
+        <div class="unit-row"><input type="number" id="bd-bigha" placeholder="0" oninput="calcArea('bigha')"><span class="unit-name">Bigha (ビガ)</span></div>
+        <div class="unit-row"><input type="number" id="bd-katha" placeholder="0" oninput="calcArea('katha')"><span class="unit-name">Katha (カタ)</span></div>
+        <div class="unit-row"><input type="number" id="bd-decimal" placeholder="0" oninput="calcArea('decimal')"><span class="unit-name">Decimal</span></div>
+        <div class="divider">⇅</div>
+        <div class="section-label">Japan / International</div>
+        <div class="unit-row"><input type="number" id="jp-ha" placeholder="0" oninput="calcArea('jp-ha')"><span class="unit-name">Hectare (ha)</span></div>
+        <div class="unit-row"><input type="number" id="jp-a" placeholder="0" oninput="calcArea('jp-a')"><span class="unit-name">Are (a)</span></div>
+        <div class="unit-row"><input type="number" id="jp-m2" placeholder="0" oninput="calcArea('jp-m2')"><span class="unit-name">Sq Meter (m²)</span></div>
+    </div>
+
+    <div id="length" class="content">
+        <div class="section-label">Bangladesh</div>
+        <div class="unit-row"><input type="number" id="bd-gaj" placeholder="0" oninput="calcLength('gaj')"><span class="unit-name">Gaj (Yard)</span></div>
+        <div class="unit-row"><input type="number" id="bd-hath" placeholder="0" oninput="calcLength('hath')"><span class="unit-name">Hath (Cubit)</span></div>
+        <div class="unit-row"><input type="number" id="bd-inchi" placeholder="0" oninput="calcLength('inchi')"><span class="unit-name">Inch</span></div>
+        <div class="divider">⇅</div>
+        <div class="section-label">Japan / International</div>
+        <div class="unit-row"><input type="number" id="jp-m" placeholder="0" oninput="calcLength('jp-m')"><span class="unit-name">Meter (m)</span></div>
+        <div class="unit-row"><input type="number" id="jp-cm" placeholder="0" oninput="calcLength('jp-cm')"><span class="unit-name">Centimeter (cm)</span></div>
+    </div>
+
+    <div id="currency" class="content">
+        <div class="section-label">Rate Setting</div>
+        <div class="unit-row" style="background: #fff0f0;"><input type="number" id="rate-bdt-jpy" value="1.35" step="0.01" oninput="calcCurrency('rate')"><span class="unit-name">1 BDT = ? JPY</span></div>
+        <div class="section-label">Large Amount</div>
+        <div class="unit-row" style="background: #e9f5f0;"><input type="number" id="cur-lakh" placeholder="0" oninput="calcCurrency('lakh')"><span class="unit-name">Lakh (Lac) Taka</span></div>
+        <div class="divider">⇅</div>
+        <div class="section-label">Standard</div>
+        <div class="unit-row"><input type="number" id="cur-bdt" placeholder="0" oninput="calcCurrency('bdt')"><span class="unit-name">Taka (BDT)</span></div>
+        <div class="unit-row"><input type="number" id="cur-jpy" placeholder="0" oninput="calcCurrency('jpy')"><span class="unit-name">Yen (JPY)</span></div>
+    </div>
+
+    <div class="ref-box">
+        <strong>References:</strong><br>
+        • Currency: <a href="https://www.xe.com/currencyconverter/convert/?From=BDT&To=JPY" target="_blank">XE.com</a> | 
+        • Guide: <a href="https://bangladesh.gov.bd" target="_blank">BD Govt Portal</a>
+    </div>
+</div>
+
+<script>
+    function openTab(evt, tabName) {
+        let i, content, tabs;
+        content = document.getElementsByClassName("content");
+        for (i = 0; i < content.length; i++) content[i].style.display = "none";
+        tabs = document.getElementsByClassName("tab-btn");
+        for (i = 0; i < tabs.length; i++) tabs[i].classList.remove("active");
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.classList.add("active");
+    }
+
+    // すべての関数で「入力されたID」から値を直接取るように修正
+    function calcWeight(src) {
+        const val = parseFloat(document.getElementById(src.includes('jp') ? src : 'bd-'+src).value || 0);
+        let kg = 0;
+        if (src === 'maund') kg = val * 37.3242;
+        else if (src === 'seer') kg = val * 0.9331;
+        else if (src === 'tola') kg = val * 0.01166;
+        else if (src === 'jp-kg') kg = val;
+        else if (src === 'jp-g') kg = val / 1000;
+
+        if (src !== 'maund') document.getElementById('bd-maund').value = (kg / 37.3242).toFixed(4);
+        if (src !== 'seer') document.getElementById('bd-seer').value = (kg / 0.9331).toFixed(3);
+        if (src !== 'tola') document.getElementById('bd-tola').value = (kg / 0.01166).toFixed(2);
+        if (src !== 'jp-kg') document.getElementById('jp-kg').value = kg.toFixed(3);
+        if (src !== 'jp-g') document.getElementById('jp-g').value = (kg * 1000).toFixed(1);
+    }
+
+    function calcArea(src) {
+        const val = parseFloat(document.getElementById(src.includes('jp') ? src : 'bd-'+src).value || 0);
+        let m2 = 0;
+        if (src === 'acre') m2 = val * 4046.86;
+        else if (src === 'bigha') m2 = val * 1337.8;
+        else if (src === 'katha') m2 = val * 66.89;
+        else if (src === 'decimal') m2 = val * 40.4686;
+        else if (src === 'jp-ha') m2 = val * 10000;
+        else if (src === 'jp-a') m2 = val * 100;
+        else if (src === 'jp-m2') m2 = val;
+
+        if (src !== 'acre') document.getElementById('bd-acre').value = (m2 / 4046.86).toFixed(4);
+        if (src !== 'bigha') document.getElementById('bd-bigha').value = (m2 / 1337.8).toFixed(4);
+        if (src !== 'katha') document.getElementById('bd-katha').value = (m2 / 66.89).toFixed(3);
+        if (src !== 'decimal') document.getElementById('bd-decimal').value = (m2 / 40.4686).toFixed(2);
+        if (src !== 'jp-ha') document.getElementById('jp-ha').value = (m2 / 10000).toFixed(6);
+        if (src !== 'jp-a') document.getElementById('jp-a').value = (m2 / 100).toFixed(4);
+        if (src !== 'jp-m2') document.getElementById('jp-m2').value = m2.toFixed(2);
+    }
+
+    function calcLength(src) {
+        const val = parseFloat(document.getElementById(src.includes('jp') ? src : 'bd-'+src).value || 0);
+        let m = 0;
+        if (src === 'gaj') m = val * 0.9144;
+        else if (src === 'hath') m = val * 0.4572;
+        else if (src === 'inchi') m = val * 0.0254;
+        else if (src === 'jp-m') m = val;
+        else if (src === 'jp-cm') m = val / 100;
+
+        if (src !== 'gaj') document.getElementById('bd-gaj').value = (m / 0.9144).toFixed(4);
+        if (src !== 'hath') document.getElementById('bd-hath').value = (m / 0.4572).toFixed(4);
+        if (src !== 'inchi') document.getElementById('bd-inchi').value = (m / 0.0254).toFixed(2);
+        if (src !== 'jp-m') document.getElementById('jp-m').value = m.toFixed(4);
+        if (src !== 'jp-cm') document.getElementById('jp-cm').value = (m * 100).toFixed(2);
+    }
+
+    function calcCurrency(src) {
+        const rate = parseFloat(document.getElementById('rate-bdt-jpy').value) || 0;
+        const lakhF = document.getElementById('cur-lakh'), bdtF = document.getElementById('cur-bdt'), jpyF = document.getElementById('cur-jpy');
+        let bdt = 0;
+        if (src === 'lakh') { bdt = parseFloat(lakhF.value || 0) * 100000; }
+        else if (src === 'bdt' || src === 'rate') { bdt = parseFloat(bdtF.value || 0); }
+        else if (src === 'jpy') { bdt = parseFloat(jpyF.value || 0) / rate; }
+
+        if (src !== 'lakh') lakhF.value = (bdt / 100000).toFixed(5);
+        if (src !== 'bdt') bdtF.value = bdt.toFixed(2);
+        if (src !== 'jpy') jpyF.value = (bdt * rate).toFixed(2);
+    }
+
+    // PWA Service Worker 登録 (オフライン対応用)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
+        });
+    }
+</script>
+
+</body>
+</html>
