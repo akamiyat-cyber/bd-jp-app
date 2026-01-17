@@ -2,184 +2,514 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BD-JP Converter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BD-JP-TH Converter</title>
     
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="manifest" href="manifest.json">
         
     <style>
-        :root { --primary-color: #006a4e; --secondary-color: #f42a41; --bg-color: #f0f2f5; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); display: flex; justify-content: center; padding: 20px; }
-        .container { background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); width: 100%; max-width: 480px; }
-        h2 { text-align: center; color: var(--primary-color); margin-bottom: 10px; }
-        .tabs { display: flex; flex-wrap: wrap; margin-bottom: 20px; background: #ddd; border-radius: 8px; padding: 4px; gap: 2px; }
-        .tab-btn { flex: 1 1 45%; padding: 10px; border: none; background: none; cursor: pointer; border-radius: 6px; font-weight: bold; color: #555; font-size: 0.85rem; }
-        .tab-btn.active { background: white; color: var(--primary-color); }
-        .content { display: none; }
-        .content.active { display: block; }
-        .section-label { font-size: 0.75rem; font-weight: bold; color: #888; margin: 15px 0 5px 5px; text-transform: uppercase; }
-        .unit-row { display: flex; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #eee; }
-        .unit-row input { flex: 1; border: none; background: transparent; font-size: 1.1rem; outline: none; text-align: right; padding-right: 10px; width: 40%; }
-        .unit-name { width: 135px; font-size: 0.85rem; color: #333; border-left: 2px solid #ddd; padding-left: 10px; }
-        .divider { text-align: center; margin: 5px 0; color: #aaa; font-size: 0.8rem; }
-        .ref-box { margin-top: 20px; padding: 10px; font-size: 0.8rem; border-top: 1px solid #eee; color: #666; }
-        .ref-box a { color: var(--primary-color); text-decoration: none; }
+        /* --- 1. Design Tokens & Reset --- */
+        :root {
+            --primary: #006a4e; /* Bangladesh Green */
+            --primary-light: #e0f2ec;
+            --accent: #f42a41; /* Japan Red */
+            --accent-light: #fde8ea;
+            --text-main: #1f2937;
+            --text-sub: #6b7280;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --border-radius: 16px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px 16px;
+        }
+
+        .app-wrapper {
+            width: 100%;
+            max-width: 440px;
+            margin: 0 auto;
+        }
+
+        /* --- 2. Header & Tabs --- */
+        header { text-align: center; margin-bottom: 24px; }
+        h1 { font-size: 1.5rem; font-weight: 800; color: var(--primary); letter-spacing: -0.02em; margin-bottom: 4px; }
+        .subtitle { font-size: 0.85rem; color: var(--text-sub); font-weight: 500; }
+
+        .tabs-container {
+            background: #e5e7eb;
+            padding: 4px;
+            border-radius: 12px;
+            display: flex;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 0;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 10px;
+            z-index: 1;
+            transition: color 0.2s ease;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            background-color: var(--bg-card);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            transform: scale(1.02);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* --- 3. Card & Inputs --- */
+        .converter-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            padding: 24px 20px;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: none; /* Controlled by JS */
+        }
+        .converter-card.active { display: block; }
+
+        .group-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 20px 0 8px 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .group-label:first-child { margin-top: 0; }
+
+        .input-group {
+            position: relative;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .input-group:focus-within {
+            background: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .input-group input {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: transparent;
+            padding: 14px 12px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-main);
+            outline: none;
+            text-align: right; 
+            font-family: 'Roboto Mono', monospace; 
+        }
+        
+        .input-group input::placeholder { color: #d1d5db; font-weight: 400; }
+
+        .unit-badge {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            background: #f3f4f6;
+            width: 110px;
+            padding: 0 12px;
+            height: 56px; 
+            border-left: 1px solid #e5e7eb;
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            font-weight: 500;
+            user-select: none;
+        }
+        .unit-badge strong {
+            display: block;
+            color: var(--text-main);
+            font-size: 0.9rem;
+        }
+
+        /* --- 4. Currency Specific --- */
+        .currency-row { border-color: #dbeafe; background: #eff6ff; }
+        .currency-row:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 3px #dbeafe; }
+        
+        .lakh-row { border-color: #d1fae5; background: #ecfdf5; }
+        .lakh-row:focus-within { border-color: #10b981; box-shadow: 0 0 0 3px #d1fae5; }
+
+        .rate-setting-box {
+            background: var(--accent-light);
+            border: 1px dashed rgba(244, 42, 65, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+        .rate-label { color: var(--accent); font-size: 0.75rem; font-weight: bold; margin-bottom: 8px; display: block; }
+        .rate-input-row { display: flex; gap: 10px; margin-bottom: 8px; }
+        .rate-input-wrapper { flex: 1; background: white; border-radius: 8px; border: 1px solid rgba(244, 42, 65, 0.2); padding: 4px 8px; display: flex; align-items: center; }
+        .rate-input-wrapper input { width: 100%; border: none; font-size: 0.9rem; outline: none; text-align: right; color: var(--accent); font-weight: bold; }
+        .rate-unit { font-size: 0.75rem; color: var(--accent); margin-left: 4px; }
+        
+        .rate-status { font-size: 0.7rem; text-align: right; color: var(--text-sub); margin-top: 4px; display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+        .rate-status.updated { color: var(--primary); }
+        .rate-status.error { color: var(--accent); }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+        /* --- 5. Footer & Divider --- */
+        .divider-icon {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 1.2rem;
+            margin: 10px 0;
+            opacity: 0.5;
+        }
+
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 0.7rem;
+        }
+        footer a { color: var(--primary); text-decoration: none; }
+
+        /* Remove Spinners */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>BD-JP Converter</h2>
-    <div class="tabs">
+<div class="app-wrapper">
+    <header>
+        <h1>BD Converter</h1>
+        <div class="subtitle">Bangladesh - Japan - Thai Tool</div>
+    </header>
+
+    <div class="tabs-container">
         <button class="tab-btn active" onclick="openTab(event, 'weight')">Weight</button>
         <button class="tab-btn" onclick="openTab(event, 'area')">Area</button>
         <button class="tab-btn" onclick="openTab(event, 'length')">Length</button>
         <button class="tab-btn" onclick="openTab(event, 'currency')">Currency</button>
     </div>
 
-    <div id="weight" class="content active">
-        <div class="section-label">Bangladesh</div>
-        <div class="unit-row"><input type="number" id="bd-maund" placeholder="0" oninput="calcWeight('maund')"><span class="unit-name">Maund (মন)</span></div>
-        <div class="unit-row"><input type="number" id="bd-seer" placeholder="0" oninput="calcWeight('seer')"><span class="unit-name">Seer (সের)</span></div>
-        <div class="unit-row"><input type="number" id="bd-tola" placeholder="0" oninput="calcWeight('tola')"><span class="unit-name">Tola (তোলা)</span></div>
-        <div class="divider">⇅</div>
-        <div class="section-label">Japan / International</div>
-        <div class="unit-row"><input type="number" id="jp-kg" placeholder="0" oninput="calcWeight('jp-kg')"><span class="unit-name">Kilogram (kg)</span></div>
-        <div class="unit-row"><input type="number" id="jp-g" placeholder="0" oninput="calcWeight('jp-g')"><span class="unit-name">Gram (g)</span></div>
+    <div id="weight" class="converter-card active">
+        <div class="group-label">🇧🇩 Bangladesh Units</div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="bd-maund" placeholder="-" onfocus="this.select()" oninput="convert('weight', 'bd-maund')">
+            <div class="unit-badge"><strong>Maund</strong><small>Mon (মন)</small></div>
+        </div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="bd-seer" placeholder="-" onfocus="this.select()" oninput="convert('weight', 'bd-seer')">
+            <div class="unit-badge"><strong>Seer</strong><small>Ser (সের)</small></div>
+        </div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="bd-tola" placeholder="-" onfocus="this.select()" oninput="convert('weight', 'bd-tola')">
+            <div class="unit-badge"><strong>Tola</strong><small>(তোলা)</small></div>
+        </div>
+
+        <div class="divider-icon">⇅</div>
+
+        <div class="group-label">🇯🇵 International</div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="jp-kg" placeholder="-" onfocus="this.select()" oninput="convert('weight', 'jp-kg')">
+            <div class="unit-badge"><strong>KG</strong><small>Kilogram</small></div>
+        </div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="jp-g" placeholder="-" onfocus="this.select()" oninput="convert('weight', 'jp-g')">
+            <div class="unit-badge"><strong>Gram</strong><small>g</small></div>
+        </div>
     </div>
 
-    <div id="area" class="content">
-        <div class="section-label">Bangladesh</div>
-        <div class="unit-row"><input type="number" id="bd-acre" placeholder="0" oninput="calcArea('acre')"><span class="unit-name">Acre (エーカー)</span></div>
-        <div class="unit-row"><input type="number" id="bd-bigha" placeholder="0" oninput="calcArea('bigha')"><span class="unit-name">Bigha (ビガ)</span></div>
-        <div class="unit-row"><input type="number" id="bd-katha" placeholder="0" oninput="calcArea('katha')"><span class="unit-name">Katha (カタ)</span></div>
-        <div class="unit-row"><input type="number" id="bd-decimal" placeholder="0" oninput="calcArea('decimal')"><span class="unit-name">Decimal</span></div>
-        <div class="divider">⇅</div>
-        <div class="section-label">Japan / International</div>
-        <div class="unit-row"><input type="number" id="jp-ha" placeholder="0" oninput="calcArea('jp-ha')"><span class="unit-name">Hectare (ha)</span></div>
-        <div class="unit-row"><input type="number" id="jp-a" placeholder="0" oninput="calcArea('jp-a')"><span class="unit-name">Are (a)</span></div>
-        <div class="unit-row"><input type="number" id="jp-m2" placeholder="0" oninput="calcArea('jp-m2')"><span class="unit-name">Sq Meter (m²)</span></div>
+    <div id="area" class="converter-card">
+        <div class="group-label">🇧🇩 Land Size</div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="bd-bigha" placeholder="-" onfocus="this.select()" oninput="convert('area', 'bd-bigha')">
+            <div class="unit-badge"><strong>Bigha</strong><small>(বিঘা)</small></div>
+        </div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="bd-katha" placeholder="-" onfocus="this.select()" oninput="convert('area', 'bd-katha')">
+            <div class="unit-badge"><strong>Katha</strong><small>(কাঠা)</small></div>
+        </div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="bd-decimal" placeholder="-" onfocus="this.select()" oninput="convert('area', 'bd-decimal')">
+            <div class="unit-badge"><strong>Decimal</strong><small>Shotok</small></div>
+        </div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="bd-acre" placeholder="-" onfocus="this.select()" oninput="convert('area', 'bd-acre')">
+            <div class="unit-badge"><strong>Acre</strong><small>エーカー</small></div>
+        </div>
+
+        <div class="divider-icon">⇅</div>
+
+        <div class="group-label">🇯🇵 International</div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="jp-ha" placeholder="-" onfocus="this.select()" oninput="convert('area', 'jp-ha')">
+            <div class="unit-badge"><strong>Hectare</strong><small>ha</small></div>
+        </div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="jp-m2" placeholder="-" onfocus="this.select()" oninput="convert('area', 'jp-m2')">
+            <div class="unit-badge"><strong>Sq.M</strong><small>m²</small></div>
+        </div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="jp-a" placeholder="-" onfocus="this.select()" oninput="convert('area', 'jp-a')">
+            <div class="unit-badge"><strong>Are</strong><small>a</small></div>
+        </div>
     </div>
 
-    <div id="length" class="content">
-        <div class="section-label">Bangladesh</div>
-        <div class="unit-row"><input type="number" id="bd-gaj" placeholder="0" oninput="calcLength('gaj')"><span class="unit-name">Gaj (Yard)</span></div>
-        <div class="unit-row"><input type="number" id="bd-hath" placeholder="0" oninput="calcLength('hath')"><span class="unit-name">Hath (Cubit)</span></div>
-        <div class="unit-row"><input type="number" id="bd-inchi" placeholder="0" oninput="calcLength('inchi')"><span class="unit-name">Inch</span></div>
-        <div class="divider">⇅</div>
-        <div class="section-label">Japan / International</div>
-        <div class="unit-row"><input type="number" id="jp-m" placeholder="0" oninput="calcLength('jp-m')"><span class="unit-name">Meter (m)</span></div>
-        <div class="unit-row"><input type="number" id="jp-cm" placeholder="0" oninput="calcLength('jp-cm')"><span class="unit-name">Centimeter (cm)</span></div>
+    <div id="length" class="converter-card">
+        <div class="group-label">🇧🇩 Fabric / Land</div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="bd-gaj" placeholder="-" onfocus="this.select()" oninput="convert('length', 'bd-gaj')">
+            <div class="unit-badge"><strong>Gaj</strong><small>Yard</small></div>
+        </div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="bd-hath" placeholder="-" onfocus="this.select()" oninput="convert('length', 'bd-hath')">
+            <div class="unit-badge"><strong>Hath</strong><small>Cubit</small></div>
+        </div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="bd-inchi" placeholder="-" onfocus="this.select()" oninput="convert('length', 'bd-inchi')">
+            <div class="unit-badge"><strong>Inch</strong><small>Inchi</small></div>
+        </div>
+
+        <div class="divider-icon">⇅</div>
+
+        <div class="group-label">🇯🇵 International</div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="jp-m" placeholder="-" onfocus="this.select()" oninput="convert('length', 'jp-m')">
+            <div class="unit-badge"><strong>Meter</strong><small>m</small></div>
+        </div>
+        <div class="input-group">
+            <input type="number" step="any" inputmode="decimal" id="jp-cm" placeholder="-" onfocus="this.select()" oninput="convert('length', 'jp-cm')">
+            <div class="unit-badge"><strong>CM</strong><small>cm</small></div>
+        </div>
     </div>
 
-    <div id="currency" class="content">
-        <div class="section-label">Rate Setting</div>
-        <div class="unit-row" style="background: #fff0f0;"><input type="number" id="rate-bdt-jpy" value="1.35" step="0.01" oninput="calcCurrency('rate')"><span class="unit-name">1 BDT = ? JPY</span></div>
-        <div class="section-label">Large Amount</div>
-        <div class="unit-row" style="background: #e9f5f0;"><input type="number" id="cur-lakh" placeholder="0" oninput="calcCurrency('lakh')"><span class="unit-name">Lakh (Lac) Taka</span></div>
-        <div class="divider">⇅</div>
-        <div class="section-label">Standard</div>
-        <div class="unit-row"><input type="number" id="cur-bdt" placeholder="0" oninput="calcCurrency('bdt')"><span class="unit-name">Taka (BDT)</span></div>
-        <div class="unit-row"><input type="number" id="cur-jpy" placeholder="0" oninput="calcCurrency('jpy')"><span class="unit-name">Yen (JPY)</span></div>
+    <div id="currency" class="converter-card">
+        <div class="group-label">Standard Converter</div>
+        
+        <div class="input-group currency-row">
+            <input type="number" step="any" inputmode="decimal" id="cur-bdt" placeholder="-" onfocus="this.select()" oninput="calcCurrency('bdt')">
+            <div class="unit-badge" style="background:transparent; border-color:#dbeafe;"><strong>BDT</strong><small>🇧🇩 Taka</small></div>
+        </div>
+        <div class="input-group currency-row">
+            <input type="number" step="any" inputmode="decimal" id="cur-jpy" placeholder="-" onfocus="this.select()" oninput="calcCurrency('jpy')">
+            <div class="unit-badge" style="background:transparent; border-color:#dbeafe;"><strong>JPY</strong><small>🇯🇵 Yen</small></div>
+        </div>
+        <div class="input-group currency-row">
+            <input type="number" step="any" inputmode="decimal" id="cur-thb" placeholder="-" onfocus="this.select()" oninput="calcCurrency('thb')">
+            <div class="unit-badge" style="background:transparent; border-color:#dbeafe;"><strong>THB</strong><small>🇹🇭 Baht</small></div>
+        </div>
+
+        <div class="group-label" style="margin-top:20px;">Large Amount</div>
+        <div class="input-group lakh-row">
+            <input type="number" step="any" inputmode="decimal" id="cur-lakh" placeholder="-" onfocus="this.select()" oninput="calcCurrency('lakh')">
+            <div class="unit-badge" style="background:transparent; border-color:#d1fae5;"><strong>Lakh</strong><small>100k BDT</small></div>
+        </div>
+
+        <div class="rate-setting-box">
+            <span class="rate-label">⚙️ Exchange Rates (1 BDT)</span>
+            <div class="rate-input-row">
+                <div class="rate-input-wrapper">
+                    <input type="number" step="0.001" inputmode="decimal" id="rate-bdt-jpy" onfocus="this.select()" oninput="calcCurrency('rate')">
+                    <span class="rate-unit">JPY</span>
+                </div>
+                <div class="rate-input-wrapper">
+                    <input type="number" step="0.001" inputmode="decimal" id="rate-bdt-thb" onfocus="this.select()" oninput="calcCurrency('rate')">
+                    <span class="rate-unit">THB</span>
+                </div>
+            </div>
+            <div id="rate-info" class="rate-status"><span class="status-dot"></span> Checking rates...</div>
+        </div>
     </div>
 
-    <div class="ref-box">
-        <strong>References:</strong><br>
-        • Currency: <a href="https://www.xe.com/currencyconverter/convert/?From=BDT&To=JPY" target="_blank">XE.com</a> | 
-        • Guide: <a href="https://bangladesh.gov.bd" target="_blank">BD Govt Portal</a>
-    </div>
-    
-    <div style="margin-top: 20px; padding: 15px; border-top: 1px solid #eee; text-align: center; font-size: 0.75rem; color: #888; line-height: 1.4;">
-        This app was created by <strong>Takehiro Kamiya (Univ. Tokyo)</strong>.<br>
-        Please use this application at your own risk.
-    </div>
-    
+    <footer>
+        <p>Data Source: <a href="#" target="_blank">Bangladesh Govt</a> & <a href="#" target="_blank">Open Exchange</a></p>
+        <p style="margin-top:6px; opacity:0.6;">© Takehiro Kamiya (Univ. Tokyo)</p>
+    </footer>
 </div>
 
 <script>
+    /* Logic: Unit Factors & Precision */
+    const UNIT_FACTORS = {
+        weight: { 'bd-maund': 37.3242, 'bd-seer': 0.9331, 'bd-tola': 0.01166, 'jp-kg': 1, 'jp-g': 0.001 },
+        area: { 'bd-acre': 4046.86, 'bd-bigha': 1337.8, 'bd-katha': 66.89, 'bd-decimal': 40.4686, 'jp-ha': 10000, 'jp-a': 100, 'jp-m2': 1 },
+        length: { 'bd-gaj': 0.9144, 'bd-hath': 0.4572, 'bd-inchi': 0.0254, 'jp-m': 1, 'jp-cm': 0.01 }
+    };
+
+    const PRECISION = {
+        'bd-maund': 4, 'bd-seer': 3, 'bd-tola': 2, 'jp-kg': 3, 'jp-g': 1,
+        'bd-acre': 4, 'bd-bigha': 4, 'bd-katha': 3, 'bd-decimal': 2, 'jp-ha': 6, 'jp-a': 4, 'jp-m2': 2,
+        'bd-gaj': 4, 'bd-hath': 4, 'bd-inchi': 2, 'jp-m': 4, 'jp-cm': 2
+    };
+
     function openTab(evt, tabName) {
-        let i, content, tabs;
-        content = document.getElementsByClassName("content");
-        for (i = 0; i < content.length; i++) content[i].style.display = "none";
-        tabs = document.getElementsByClassName("tab-btn");
-        for (i = 0; i < tabs.length; i++) tabs[i].classList.remove("active");
-        document.getElementById(tabName).style.display = "block";
-        evt.currentTarget.classList.add("active");
+        document.querySelectorAll('.converter-card').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabName).classList.add('active');
+        evt.currentTarget.classList.add('active');
     }
 
-    // すべての関数で「入力されたID」から値を直接取るように修正
-    function calcWeight(src) {
-        const val = parseFloat(document.getElementById(src.includes('jp') ? src : 'bd-'+src).value || 0);
-        let kg = 0;
-        if (src === 'maund') kg = val * 37.3242;
-        else if (src === 'seer') kg = val * 0.9331;
-        else if (src === 'tola') kg = val * 0.01166;
-        else if (src === 'jp-kg') kg = val;
-        else if (src === 'jp-g') kg = val / 1000;
+    /* Fixed Conversion Logic: Never overwrite the source input while typing */
+    function convert(category, srcId) {
+        const inputEl = document.getElementById(srcId);
+        let valStr = inputEl.value;
 
-        if (src !== 'maund') document.getElementById('bd-maund').value = (kg / 37.3242).toFixed(4);
-        if (src !== 'seer') document.getElementById('bd-seer').value = (kg / 0.9331).toFixed(3);
-        if (src !== 'tola') document.getElementById('bd-tola').value = (kg / 0.01166).toFixed(2);
-        if (src !== 'jp-kg') document.getElementById('jp-kg').value = kg.toFixed(3);
-        if (src !== 'jp-g') document.getElementById('jp-g').value = (kg * 1000).toFixed(1);
+        // Only clear others if input is empty
+        if (valStr === "") {
+            clearOtherFields(category, srcId);
+            return;
+        }
+
+        let val = parseFloat(valStr);
+        if (isNaN(val)) return; // Don't calculate if invalid
+        
+        // Calculate Base Value (Factor * Input)
+        const baseValue = val * UNIT_FACTORS[category][srcId];
+
+        // Update ONLY other fields
+        for (const [key, factor] of Object.entries(UNIT_FACTORS[category])) {
+            if (key !== srcId) {
+                const targetEl = document.getElementById(key);
+                const result = baseValue / factor;
+                let decimals = PRECISION[key] || 2;
+                targetEl.value = result === 0 ? "" : parseFloat(result.toFixed(decimals));
+            }
+        }
     }
 
-    function calcArea(src) {
-        const val = parseFloat(document.getElementById(src.includes('jp') ? src : 'bd-'+src).value || 0);
-        let m2 = 0;
-        if (src === 'acre') m2 = val * 4046.86;
-        else if (src === 'bigha') m2 = val * 1337.8;
-        else if (src === 'katha') m2 = val * 66.89;
-        else if (src === 'decimal') m2 = val * 40.4686;
-        else if (src === 'jp-ha') m2 = val * 10000;
-        else if (src === 'jp-a') m2 = val * 100;
-        else if (src === 'jp-m2') m2 = val;
-
-        if (src !== 'acre') document.getElementById('bd-acre').value = (m2 / 4046.86).toFixed(4);
-        if (src !== 'bigha') document.getElementById('bd-bigha').value = (m2 / 1337.8).toFixed(4);
-        if (src !== 'katha') document.getElementById('bd-katha').value = (m2 / 66.89).toFixed(3);
-        if (src !== 'decimal') document.getElementById('bd-decimal').value = (m2 / 40.4686).toFixed(2);
-        if (src !== 'jp-ha') document.getElementById('jp-ha').value = (m2 / 10000).toFixed(6);
-        if (src !== 'jp-a') document.getElementById('jp-a').value = (m2 / 100).toFixed(4);
-        if (src !== 'jp-m2') document.getElementById('jp-m2').value = m2.toFixed(2);
+    function clearOtherFields(category, srcId) {
+        for (const key of Object.keys(UNIT_FACTORS[category])) {
+            if (key !== srcId) document.getElementById(key).value = "";
+        }
+    }
+    
+    // Fallback global clear if needed
+    function clearFields(category) {
+        for (const key of Object.keys(UNIT_FACTORS[category])) document.getElementById(key).value = "";
     }
 
-    function calcLength(src) {
-        const val = parseFloat(document.getElementById(src.includes('jp') ? src : 'bd-'+src).value || 0);
-        let m = 0;
-        if (src === 'gaj') m = val * 0.9144;
-        else if (src === 'hath') m = val * 0.4572;
-        else if (src === 'inchi') m = val * 0.0254;
-        else if (src === 'jp-m') m = val;
-        else if (src === 'jp-cm') m = val / 100;
-
-        if (src !== 'gaj') document.getElementById('bd-gaj').value = (m / 0.9144).toFixed(4);
-        if (src !== 'hath') document.getElementById('bd-hath').value = (m / 0.4572).toFixed(4);
-        if (src !== 'inchi') document.getElementById('bd-inchi').value = (m / 0.0254).toFixed(2);
-        if (src !== 'jp-m') document.getElementById('jp-m').value = m.toFixed(4);
-        if (src !== 'jp-cm') document.getElementById('jp-cm').value = (m * 100).toFixed(2);
-    }
-
+    /* Currency Logic */
     function calcCurrency(src) {
-        const rate = parseFloat(document.getElementById('rate-bdt-jpy').value) || 0;
-        const lakhF = document.getElementById('cur-lakh'), bdtF = document.getElementById('cur-bdt'), jpyF = document.getElementById('cur-jpy');
+        const rateJpy = parseFloat(document.getElementById('rate-bdt-jpy').value) || 1.35;
+        const rateThb = parseFloat(document.getElementById('rate-bdt-thb').value) || 0.30;
+        const els = {
+            lakh: document.getElementById('cur-lakh'),
+            bdt: document.getElementById('cur-bdt'),
+            jpy: document.getElementById('cur-jpy'),
+            thb: document.getElementById('cur-thb')
+        };
+
         let bdt = 0;
-        if (src === 'lakh') { bdt = parseFloat(lakhF.value || 0) * 100000; }
-        else if (src === 'bdt' || src === 'rate') { bdt = parseFloat(bdtF.value || 0); }
-        else if (src === 'jpy') { bdt = parseFloat(jpyF.value || 0) / rate; }
+        let isClear = false;
+        
+        // Read Source
+        if (src === 'lakh') {
+            if (els.lakh.value === "") isClear = true;
+            else bdt = parseFloat(els.lakh.value) * 100000;
+        } else if (src === 'bdt' || src === 'rate') {
+            if (src === 'bdt' && els.bdt.value === "") isClear = true;
+            else bdt = parseFloat(els.bdt.value || 0);
+        } else if (src === 'jpy') {
+            if (els.jpy.value === "") isClear = true;
+            else bdt = parseFloat(els.jpy.value) / rateJpy;
+        } else if (src === 'thb') {
+            if (els.thb.value === "") isClear = true;
+            else bdt = parseFloat(els.thb.value) / rateThb;
+        }
 
-        if (src !== 'lakh') lakhF.value = (bdt / 100000).toFixed(5);
-        if (src !== 'bdt') bdtF.value = bdt.toFixed(2);
-        if (src !== 'jpy') jpyF.value = (bdt * rate).toFixed(2);
+        // Handle Clear
+        if (isClear && src !== 'rate') {
+            Object.keys(els).forEach(k => { if(src !== 'rate' && (src === 'lakh' ? k!=='lakh' : (src === 'bdt'? k!=='bdt' : (src==='jpy'? k!=='jpy': k!=='thb')))) els[k].value = ""; });
+            // Actually simpler: clear all except src
+             if (src !== 'lakh') els.lakh.value = "";
+             if (src !== 'bdt') els.bdt.value = "";
+             if (src !== 'jpy') els.jpy.value = "";
+             if (src !== 'thb') els.thb.value = "";
+            return;
+        }
+
+        // Write targets (never overwrite source to allow decimal typing)
+        if (src !== 'lakh') els.lakh.value = parseFloat((bdt / 100000).toFixed(5));
+        if (src !== 'bdt' && src !== 'rate') els.bdt.value = parseFloat(bdt.toFixed(2));
+        if (src !== 'jpy') els.jpy.value = parseFloat((bdt * rateJpy).toFixed(2));
+        if (src !== 'thb') els.thb.value = parseFloat((bdt * rateThb).toFixed(2));
     }
 
-    // PWA Service Worker 登録 (オフライン対応用)
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
-        });
+    async function fetchRate() {
+        const infoEl = document.getElementById('rate-info');
+        const rateJpyInput = document.getElementById('rate-bdt-jpy');
+        const rateThbInput = document.getElementById('rate-bdt-thb');
+        const CACHE_KEY = 'bd_jp_th_rate_v3'; 
+        const API_URL = 'https://open.er-api.com/v6/latest/BDT';
+
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error("Network error");
+            const data = await response.json();
+            const newRateJpy = data.rates.JPY;
+            const newRateThb = data.rates.THB;
+            const updateTime = new Date(data.time_last_update_utc).toLocaleDateString();
+
+            rateJpyInput.value = newRateJpy.toFixed(4);
+            rateThbInput.value = newRateThb.toFixed(4);
+            infoEl.innerHTML = `<span class="status-dot" style="color:#006a4e"></span> Updated: ${updateTime}`;
+            infoEl.className = 'rate-status updated';
+
+            localStorage.setItem(CACHE_KEY, JSON.stringify({ rateJpy: newRateJpy, rateThb: newRateThb, date: updateTime }));
+            if(document.getElementById('cur-bdt').value) calcCurrency('rate');
+
+        } catch (error) {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) {
+                const cData = JSON.parse(cached);
+                rateJpyInput.value = cData.rateJpy.toFixed(4);
+                rateThbInput.value = (cData.rateThb || 0.30).toFixed(4);
+                infoEl.innerHTML = `<span class="status-dot" style="color:#6b7280"></span> Cached: ${cData.date}`;
+            } else {
+                rateJpyInput.value = "1.35"; rateThbInput.value = "0.30";
+                infoEl.innerHTML = `<span class="status-dot" style="color:#f42a41"></span> Offline (Default)`;
+                infoEl.className = 'rate-status error';
+            }
+        }
     }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        fetchRate();
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
 </script>
 
 </body>
