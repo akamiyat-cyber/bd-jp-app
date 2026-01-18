@@ -7,13 +7,15 @@
     
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="manifest" href="manifest.json">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
         
     <style>
         /* --- 1. Design Tokens & Reset --- */
         :root {
-            --primary: #006a4e; /* Bangladesh Green */
+            --primary: #006a4e;
             --primary-light: #e0f2ec;
-            --accent: #f42a41; /* Japan Red */
+            --accent: #f42a41;
             --accent-light: #fde8ea;
             --text-main: #1f2937;
             --text-sub: #6b7280;
@@ -37,11 +39,7 @@
             padding: 20px 16px;
         }
 
-        .app-wrapper {
-            width: 100%;
-            max-width: 440px;
-            margin: 0 auto;
-        }
+        .app-wrapper { width: 100%; max-width: 440px; margin: 0 auto; }
 
         /* --- 2. Header & Tabs --- */
         header { text-align: center; margin-bottom: 24px; }
@@ -54,160 +52,89 @@
             border-radius: 12px;
             display: flex;
             margin-bottom: 24px;
-            position: relative;
         }
-
         .tab-btn {
-            flex: 1;
-            padding: 10px 0;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-sub);
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            border-radius: 10px;
-            z-index: 1;
-            transition: color 0.2s ease;
+            flex: 1; padding: 10px 0; font-size: 0.85rem; font-weight: 600; color: var(--text-sub);
+            border: none; background: transparent; cursor: pointer; border-radius: 10px; transition: all 0.2s ease;
         }
-
         .tab-btn.active {
-            color: var(--primary);
-            background-color: var(--bg-card);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-            transform: scale(1.02);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--primary); background-color: var(--bg-card);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08); transform: scale(1.02);
         }
 
         /* --- 3. Card & Inputs --- */
         .converter-card {
-            background: var(--bg-card);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-md);
-            padding: 24px 20px;
-            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            display: none; /* Controlled by JS */
+            background: var(--bg-card); border-radius: var(--border-radius); box-shadow: var(--shadow-md);
+            padding: 24px 20px; display: none;
         }
-        .converter-card.active { display: block; }
+        .converter-card.active { display: block; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 
         .group-label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--text-sub);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin: 20px 0 8px 4px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            font-size: 0.75rem; font-weight: 700; color: var(--text-sub); text-transform: uppercase;
+            letter-spacing: 0.05em; margin: 20px 0 8px 4px; display: flex; align-items: center; gap: 6px;
         }
         .group-label:first-child { margin-top: 0; }
 
         .input-group {
-            position: relative;
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
+            position: relative; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px;
+            margin-bottom: 12px; transition: all 0.2s ease; display: flex; align-items: center; overflow: hidden;
+            /* For Sortable */
+            touch-action: pan-y; 
         }
+        .input-group:focus-within { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        /* Sortable Ghost State */
+        .sortable-ghost { opacity: 0.4; background: #e0f2ec; border: 2px dashed var(--primary); }
 
-        .input-group:focus-within {
-            background: #fff;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-light);
+        /* Drag Handle */
+        .drag-handle {
+            width: 24px; display: flex; align-items: center; justify-content: center;
+            cursor: grab; color: #d1d5db; padding-left: 8px; font-size: 1.2rem;
+            user-select: none;
         }
+        .drag-handle::before { content: '⋮⋮'; letter-spacing: -2px; }
+        .drag-handle:active { cursor: grabbing; color: var(--primary); }
 
         .input-group input {
-            flex: 1;
-            width: 100%;
-            border: none;
-            background: transparent;
-            padding: 14px 12px;
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-main);
-            outline: none;
-            text-align: right; 
+            flex: 1; width: 100%; border: none; background: transparent; padding: 14px 8px;
+            font-size: 1.25rem; font-weight: 600; color: var(--text-main); outline: none; text-align: right; 
             font-family: 'Roboto Mono', monospace; 
         }
-        
         .input-group input::placeholder { color: #d1d5db; font-weight: 400; }
 
         .unit-badge {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: flex-start;
-            background: #f3f4f6;
-            width: 110px;
-            padding: 0 12px;
-            height: 56px; 
-            border-left: 1px solid #e5e7eb;
-            font-size: 0.8rem;
-            color: var(--text-sub);
-            font-weight: 500;
-            user-select: none;
+            display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+            background: #f3f4f6; width: 110px; padding: 0 12px; height: 56px; 
+            border-left: 1px solid #e5e7eb; font-size: 0.8rem; color: var(--text-sub); font-weight: 500;
         }
-        .unit-badge strong {
-            display: block;
-            color: var(--text-main);
-            font-size: 0.9rem;
-        }
+        .unit-badge strong { display: block; color: var(--text-main); font-size: 0.9rem; }
 
-        /* --- 4. Currency Specific --- */
+        /* Currency & Divider */
         .currency-row { border-color: #dbeafe; background: #eff6ff; }
         .currency-row:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 3px #dbeafe; }
-        
         .lakh-row { border-color: #d1fae5; background: #ecfdf5; }
         .lakh-row:focus-within { border-color: #10b981; box-shadow: 0 0 0 3px #d1fae5; }
+        .divider-icon { text-align: center; color: #9ca3af; font-size: 1.2rem; margin: 10px 0; opacity: 0.5; }
 
+        /* Settings Box */
         .rate-setting-box {
-            background: var(--accent-light);
-            border: 1px dashed rgba(244, 42, 65, 0.3);
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 24px;
+            background: var(--accent-light); border: 1px dashed rgba(244, 42, 65, 0.3); border-radius: 12px;
+            padding: 16px; margin-top: 24px;
         }
         .rate-label { color: var(--accent); font-size: 0.75rem; font-weight: bold; margin-bottom: 8px; display: block; }
         .rate-input-row { display: flex; gap: 10px; margin-bottom: 8px; }
         .rate-input-wrapper { flex: 1; background: white; border-radius: 8px; border: 1px solid rgba(244, 42, 65, 0.2); padding: 4px 8px; display: flex; align-items: center; }
         .rate-input-wrapper input { width: 100%; border: none; font-size: 0.9rem; outline: none; text-align: right; color: var(--accent); font-weight: bold; }
         .rate-unit { font-size: 0.75rem; color: var(--accent); margin-left: 4px; }
-        
-        .rate-status { font-size: 0.7rem; text-align: right; color: var(--text-sub); margin-top: 4px; display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+        .rate-status { font-size: 0.7rem; text-align: right; color: var(--text-sub); margin-top: 4px; }
         .rate-status.updated { color: var(--primary); }
         .rate-status.error { color: var(--accent); }
         .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: inline-block; }
 
-        /* --- 5. Footer & Divider --- */
-        .divider-icon {
-            text-align: center;
-            color: #9ca3af;
-            font-size: 1.2rem;
-            margin: 10px 0;
-            opacity: 0.5;
-        }
-
-        footer {
-            margin-top: 30px;
-            text-align: center;
-            color: #9ca3af;
-            font-size: 0.7rem;
-        }
+        footer { margin-top: 30px; text-align: center; color: #9ca3af; font-size: 0.7rem; }
         footer a { color: var(--primary); text-decoration: none; }
-
-        /* Remove Spinners */
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -227,110 +154,158 @@
 
     <div id="weight" class="converter-card active">
         <div class="group-label">🇧🇩 Bangladesh Units</div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="bd-maund" placeholder="-" onfocus="this.select()" oninput="convert('weight', 'bd-maund')">
-            <div class="unit-badge"><strong>Maund</strong><small>Mon (মন)</small></div>
-        </div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="bd-seer" placeholder="-" onfocus="this.select()" oninput="convert('weight', 'bd-seer')">
-            <div class="unit-badge"><strong>Seer</strong><small>Ser (সের)</small></div>
-        </div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="bd-tola" placeholder="-" onfocus="this.select()" oninput="convert('weight', 'bd-tola')">
-            <div class="unit-badge"><strong>Tola</strong><small>(তোলা)</small></div>
+        <div class="sortable-list" data-group-id="weight-bd">
+            <div class="input-group" data-id="bd-maund">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="bd-maund" placeholder="-" onfocus="this.select()" oninput="convert('weight', 'bd-maund')">
+                <div class="unit-badge"><strong>Maund</strong><small>Mon (মন)</small></div>
+            </div>
+            <div class="input-group" data-id="bd-seer">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="bd-seer" placeholder="-" onfocus="this.select()" oninput="convert('weight', 'bd-seer')">
+                <div class="unit-badge"><strong>Seer</strong><small>Ser (সের)</small></div>
+            </div>
+            <div class="input-group" data-id="bd-tola">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="bd-tola" placeholder="-" onfocus="this.select()" oninput="convert('weight', 'bd-tola')">
+                <div class="unit-badge"><strong>Tola</strong><small>(তোলা)</small></div>
+            </div>
         </div>
 
         <div class="divider-icon">⇅</div>
 
         <div class="group-label">🇯🇵 International</div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="jp-kg" placeholder="-" onfocus="this.select()" oninput="convert('weight', 'jp-kg')">
-            <div class="unit-badge"><strong>KG</strong><small>Kilogram</small></div>
-        </div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="jp-g" placeholder="-" onfocus="this.select()" oninput="convert('weight', 'jp-g')">
-            <div class="unit-badge"><strong>Gram</strong><small>g</small></div>
+        <div class="sortable-list" data-group-id="weight-jp">
+            <div class="input-group" data-id="jp-kg">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="jp-kg" placeholder="-" onfocus="this.select()" oninput="convert('weight', 'jp-kg')">
+                <div class="unit-badge"><strong>KG</strong><small>Kilogram</small></div>
+            </div>
+            <div class="input-group" data-id="jp-g">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="jp-g" placeholder="-" onfocus="this.select()" oninput="convert('weight', 'jp-g')">
+                <div class="unit-badge"><strong>Gram</strong><small>g</small></div>
+            </div>
         </div>
     </div>
 
     <div id="area" class="converter-card">
         <div class="group-label">🇧🇩 Land Size</div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="bd-bigha" placeholder="-" onfocus="this.select()" oninput="convert('area', 'bd-bigha')">
-            <div class="unit-badge"><strong>Bigha</strong><small>(বিঘা)</small></div>
-        </div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="bd-katha" placeholder="-" onfocus="this.select()" oninput="convert('area', 'bd-katha')">
-            <div class="unit-badge"><strong>Katha</strong><small>(কাঠা)</small></div>
-        </div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="bd-decimal" placeholder="-" onfocus="this.select()" oninput="convert('area', 'bd-decimal')">
-            <div class="unit-badge"><strong>Decimal</strong><small>Shotok</small></div>
-        </div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="bd-acre" placeholder="-" onfocus="this.select()" oninput="convert('area', 'bd-acre')">
-            <div class="unit-badge"><strong>Acre</strong><small>エーカー</small></div>
+        <div class="sortable-list" data-group-id="area-bd">
+            <div class="input-group" data-id="bd-bigha">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="bd-bigha" placeholder="-" onfocus="this.select()" oninput="convert('area', 'bd-bigha')">
+                <div class="unit-badge"><strong>Bigha</strong><small>(বিঘা)</small></div>
+            </div>
+            <div class="input-group" data-id="bd-katha">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="bd-katha" placeholder="-" onfocus="this.select()" oninput="convert('area', 'bd-katha')">
+                <div class="unit-badge"><strong>Katha</strong><small>(কাঠা)</small></div>
+            </div>
+            <div class="input-group" data-id="bd-decimal">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="bd-decimal" placeholder="-" onfocus="this.select()" oninput="convert('area', 'bd-decimal')">
+                <div class="unit-badge"><strong>Decimal</strong><small>Shotok</small></div>
+            </div>
+            <div class="input-group" data-id="bd-acre">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="bd-acre" placeholder="-" onfocus="this.select()" oninput="convert('area', 'bd-acre')">
+                <div class="unit-badge"><strong>Acre</strong><small>エーカー</small></div>
+            </div>
         </div>
 
         <div class="divider-icon">⇅</div>
 
-        <div class="group-label">🇯🇵 International</div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="jp-ha" placeholder="-" onfocus="this.select()" oninput="convert('area', 'jp-ha')">
-            <div class="unit-badge"><strong>Hectare</strong><small>ha</small></div>
-        </div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="jp-m2" placeholder="-" onfocus="this.select()" oninput="convert('area', 'jp-m2')">
-            <div class="unit-badge"><strong>Sq.M</strong><small>m²</small></div>
-        </div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="jp-a" placeholder="-" onfocus="this.select()" oninput="convert('area', 'jp-a')">
-            <div class="unit-badge"><strong>Are</strong><small>a</small></div>
+        <div class="group-label">🇯🇵 International / Japan</div>
+        <div class="sortable-list" data-group-id="area-jp">
+            <div class="input-group" data-id="jp-ha">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="jp-ha" placeholder="-" onfocus="this.select()" oninput="convert('area', 'jp-ha')">
+                <div class="unit-badge"><strong>Hectare</strong><small>ha</small></div>
+            </div>
+            <div class="input-group" data-id="jp-a">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="jp-a" placeholder="-" onfocus="this.select()" oninput="convert('area', 'jp-a')">
+                <div class="unit-badge"><strong>Are</strong><small>アール (a)</small></div>
+            </div>
+            <div class="input-group" data-id="jp-m2">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="jp-m2" placeholder="-" onfocus="this.select()" oninput="convert('area', 'jp-m2')">
+                <div class="unit-badge"><strong>Sq.M</strong><small>m²</small></div>
+            </div>
+            <div class="input-group" data-id="jp-tan">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="jp-tan" placeholder="-" onfocus="this.select()" oninput="convert('area', 'jp-tan')">
+                <div class="unit-badge"><strong>Tan</strong><small>反 (10a)</small></div>
+            </div>
+            <div class="input-group" data-id="jp-cho">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="jp-cho" placeholder="-" onfocus="this.select()" oninput="convert('area', 'jp-cho')">
+                <div class="unit-badge"><strong>Cho</strong><small>町 (1ha)</small></div>
+            </div>
         </div>
     </div>
 
     <div id="length" class="converter-card">
         <div class="group-label">🇧🇩 Fabric / Land</div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="bd-gaj" placeholder="-" onfocus="this.select()" oninput="convert('length', 'bd-gaj')">
-            <div class="unit-badge"><strong>Gaj</strong><small>Yard</small></div>
-        </div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="bd-hath" placeholder="-" onfocus="this.select()" oninput="convert('length', 'bd-hath')">
-            <div class="unit-badge"><strong>Hath</strong><small>Cubit</small></div>
-        </div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="bd-inchi" placeholder="-" onfocus="this.select()" oninput="convert('length', 'bd-inchi')">
-            <div class="unit-badge"><strong>Inch</strong><small>Inchi</small></div>
+        <div class="sortable-list" data-group-id="length-bd">
+            <div class="input-group" data-id="bd-gaj">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="bd-gaj" placeholder="-" onfocus="this.select()" oninput="convert('length', 'bd-gaj')">
+                <div class="unit-badge"><strong>Gaj</strong><small>Yard</small></div>
+            </div>
+            <div class="input-group" data-id="bd-hath">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="bd-hath" placeholder="-" onfocus="this.select()" oninput="convert('length', 'bd-hath')">
+                <div class="unit-badge"><strong>Hath</strong><small>Cubit</small></div>
+            </div>
+            <div class="input-group" data-id="bd-inchi">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="bd-inchi" placeholder="-" onfocus="this.select()" oninput="convert('length', 'bd-inchi')">
+                <div class="unit-badge"><strong>Inch</strong><small>Inchi</small></div>
+            </div>
         </div>
 
         <div class="divider-icon">⇅</div>
 
         <div class="group-label">🇯🇵 International</div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="jp-m" placeholder="-" onfocus="this.select()" oninput="convert('length', 'jp-m')">
-            <div class="unit-badge"><strong>Meter</strong><small>m</small></div>
-        </div>
-        <div class="input-group">
-            <input type="number" step="any" inputmode="decimal" id="jp-cm" placeholder="-" onfocus="this.select()" oninput="convert('length', 'jp-cm')">
-            <div class="unit-badge"><strong>CM</strong><small>cm</small></div>
+        <div class="sortable-list" data-group-id="length-jp">
+            <div class="input-group" data-id="jp-m">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="jp-m" placeholder="-" onfocus="this.select()" oninput="convert('length', 'jp-m')">
+                <div class="unit-badge"><strong>Meter</strong><small>m</small></div>
+            </div>
+            <div class="input-group" data-id="jp-cm">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="jp-cm" placeholder="-" onfocus="this.select()" oninput="convert('length', 'jp-cm')">
+                <div class="unit-badge"><strong>CM</strong><small>cm</small></div>
+            </div>
+            <div class="input-group" data-id="jp-ft">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="jp-ft" placeholder="-" onfocus="this.select()" oninput="convert('length', 'jp-ft')">
+                <div class="unit-badge"><strong>Feet</strong><small>ft</small></div>
+            </div>
         </div>
     </div>
 
     <div id="currency" class="converter-card">
         <div class="group-label">Standard Converter</div>
-        
-        <div class="input-group currency-row">
-            <input type="number" step="any" inputmode="decimal" id="cur-bdt" placeholder="-" onfocus="this.select()" oninput="calcCurrency('bdt')">
-            <div class="unit-badge" style="background:transparent; border-color:#dbeafe;"><strong>BDT</strong><small>🇧🇩 Taka</small></div>
-        </div>
-        <div class="input-group currency-row">
-            <input type="number" step="any" inputmode="decimal" id="cur-jpy" placeholder="-" onfocus="this.select()" oninput="calcCurrency('jpy')">
-            <div class="unit-badge" style="background:transparent; border-color:#dbeafe;"><strong>JPY</strong><small>🇯🇵 Yen</small></div>
-        </div>
-        <div class="input-group currency-row">
-            <input type="number" step="any" inputmode="decimal" id="cur-thb" placeholder="-" onfocus="this.select()" oninput="calcCurrency('thb')">
-            <div class="unit-badge" style="background:transparent; border-color:#dbeafe;"><strong>THB</strong><small>🇹🇭 Baht</small></div>
+        <div class="sortable-list" data-group-id="currency-std">
+            <div class="input-group currency-row" data-id="cur-bdt">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="cur-bdt" placeholder="-" onfocus="this.select()" oninput="calcCurrency('bdt')">
+                <div class="unit-badge" style="background:transparent; border-color:#dbeafe;"><strong>BDT</strong><small>🇧🇩 Taka</small></div>
+            </div>
+            <div class="input-group currency-row" data-id="cur-jpy">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="cur-jpy" placeholder="-" onfocus="this.select()" oninput="calcCurrency('jpy')">
+                <div class="unit-badge" style="background:transparent; border-color:#dbeafe;"><strong>JPY</strong><small>🇯🇵 Yen</small></div>
+            </div>
+            <div class="input-group currency-row" data-id="cur-thb">
+                <div class="drag-handle"></div>
+                <input type="number" step="any" inputmode="decimal" id="cur-thb" placeholder="-" onfocus="this.select()" oninput="calcCurrency('thb')">
+                <div class="unit-badge" style="background:transparent; border-color:#dbeafe;"><strong>THB</strong><small>🇹🇭 Baht</small></div>
+            </div>
         </div>
 
         <div class="group-label" style="margin-top:20px;">Large Amount</div>
@@ -365,14 +340,22 @@
     /* Logic: Unit Factors & Precision */
     const UNIT_FACTORS = {
         weight: { 'bd-maund': 37.3242, 'bd-seer': 0.9331, 'bd-tola': 0.01166, 'jp-kg': 1, 'jp-g': 0.001 },
-        area: { 'bd-acre': 4046.86, 'bd-bigha': 1337.8, 'bd-katha': 66.89, 'bd-decimal': 40.4686, 'jp-ha': 10000, 'jp-a': 100, 'jp-m2': 1 },
-        length: { 'bd-gaj': 0.9144, 'bd-hath': 0.4572, 'bd-inchi': 0.0254, 'jp-m': 1, 'jp-cm': 0.01 }
+        area: { 
+            'bd-acre': 4046.86, 'bd-bigha': 1337.8, 'bd-katha': 66.89, 'bd-decimal': 40.4686, 
+            'jp-ha': 10000, 'jp-a': 100, 'jp-m2': 1,
+            'jp-tan': 991.7355, 'jp-cho': 9917.355
+        },
+        length: { 
+            'bd-gaj': 0.9144, 'bd-hath': 0.4572, 'bd-inchi': 0.0254, 
+            'jp-m': 1, 'jp-cm': 0.01, 'jp-ft': 0.3048 
+        }
     };
 
     const PRECISION = {
         'bd-maund': 4, 'bd-seer': 3, 'bd-tola': 2, 'jp-kg': 3, 'jp-g': 1,
         'bd-acre': 4, 'bd-bigha': 4, 'bd-katha': 3, 'bd-decimal': 2, 'jp-ha': 6, 'jp-a': 4, 'jp-m2': 2,
-        'bd-gaj': 4, 'bd-hath': 4, 'bd-inchi': 2, 'jp-m': 4, 'jp-cm': 2
+        'jp-tan': 4, 'jp-cho': 4,
+        'bd-gaj': 4, 'bd-hath': 4, 'bd-inchi': 2, 'jp-m': 4, 'jp-cm': 2, 'jp-ft': 2 
     };
 
     function openTab(evt, tabName) {
@@ -382,24 +365,16 @@
         evt.currentTarget.classList.add('active');
     }
 
-    /* Fixed Conversion Logic: Never overwrite the source input while typing */
+    /* Fixed Conversion Logic */
     function convert(category, srcId) {
         const inputEl = document.getElementById(srcId);
         let valStr = inputEl.value;
-
-        // Only clear others if input is empty
-        if (valStr === "") {
-            clearOtherFields(category, srcId);
-            return;
-        }
-
+        if (valStr === "") { clearOtherFields(category, srcId); return; }
         let val = parseFloat(valStr);
-        if (isNaN(val)) return; // Don't calculate if invalid
+        if (isNaN(val)) return; 
         
-        // Calculate Base Value (Factor * Input)
         const baseValue = val * UNIT_FACTORS[category][srcId];
 
-        // Update ONLY other fields
         for (const [key, factor] of Object.entries(UNIT_FACTORS[category])) {
             if (key !== srcId) {
                 const targetEl = document.getElementById(key);
@@ -414,11 +389,6 @@
         for (const key of Object.keys(UNIT_FACTORS[category])) {
             if (key !== srcId) document.getElementById(key).value = "";
         }
-    }
-    
-    // Fallback global clear if needed
-    function clearFields(category) {
-        for (const key of Object.keys(UNIT_FACTORS[category])) document.getElementById(key).value = "";
     }
 
     /* Currency Logic */
@@ -435,7 +405,6 @@
         let bdt = 0;
         let isClear = false;
         
-        // Read Source
         if (src === 'lakh') {
             if (els.lakh.value === "") isClear = true;
             else bdt = parseFloat(els.lakh.value) * 100000;
@@ -450,18 +419,15 @@
             else bdt = parseFloat(els.thb.value) / rateThb;
         }
 
-        // Handle Clear
         if (isClear && src !== 'rate') {
             Object.keys(els).forEach(k => { if(src !== 'rate' && (src === 'lakh' ? k!=='lakh' : (src === 'bdt'? k!=='bdt' : (src==='jpy'? k!=='jpy': k!=='thb')))) els[k].value = ""; });
-            // Actually simpler: clear all except src
-             if (src !== 'lakh') els.lakh.value = "";
-             if (src !== 'bdt') els.bdt.value = "";
-             if (src !== 'jpy') els.jpy.value = "";
-             if (src !== 'thb') els.thb.value = "";
+            if (src !== 'lakh') els.lakh.value = "";
+            if (src !== 'bdt') els.bdt.value = "";
+            if (src !== 'jpy') els.jpy.value = "";
+            if (src !== 'thb') els.thb.value = "";
             return;
         }
 
-        // Write targets (never overwrite source to allow decimal typing)
         if (src !== 'lakh') els.lakh.value = parseFloat((bdt / 100000).toFixed(5));
         if (src !== 'bdt' && src !== 'rate') els.bdt.value = parseFloat(bdt.toFixed(2));
         if (src !== 'jpy') els.jpy.value = parseFloat((bdt * rateJpy).toFixed(2));
@@ -506,9 +472,29 @@
         }
     }
 
+    /* --- Drag & Drop Init --- */
     window.addEventListener('DOMContentLoaded', () => {
         fetchRate();
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+
+        // Initialize Sortable for all groups
+        document.querySelectorAll('.sortable-list').forEach(el => {
+            new Sortable(el, {
+                handle: '.drag-handle',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                store: {
+                    get: function (sortable) {
+                        const order = localStorage.getItem('sort_' + sortable.el.dataset.groupId);
+                        return order ? order.split('|') : [];
+                    },
+                    set: function (sortable) {
+                        const order = sortable.toArray();
+                        localStorage.setItem('sort_' + sortable.el.dataset.groupId, order.join('|'));
+                    }
+                }
+            });
+        });
     });
 </script>
 
